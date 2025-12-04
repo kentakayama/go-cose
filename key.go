@@ -770,34 +770,9 @@ func (k *Key) Thumbprint(hash crypto.Hash) ([]byte, error) {
 }
 
 func (k *Key) calcOKPThumbprint() ([]byte, error) {
-	t, ok := k.Params[KeyLabelOKPX]
-	if !ok {
-		return nil, ErrOKPNoPub
-	}
-	x, ok := t.([]byte)
-	if !ok {
-		return nil, ErrInvalidPubKey
-	}
-
-	switch k.Params[KeyLabelOKPCurve] {
-	case CurveEd25519:
-		if len(x) != ed25519.PublicKeySize {
-			return nil, ErrInvalidPubKey
-		}
-	case CurveEd448:
-		if len(x) != 57 {
-			return nil, ErrInvalidPubKey
-		}
-	case CurveX25519:
-		if len(x) != 32 {
-			return nil, ErrInvalidPubKey
-		}
-	case CurveX448:
-		if len(x) != 56 {
-			return nil, ErrInvalidPubKey
-		}
-	default:
-		return nil, ErrOpNotSupported
+	err := k.validate(KeyOpReserved)
+	if err != nil {
+		return nil, err
 	}
 
 	m := make(map[int]interface{})
@@ -808,38 +783,9 @@ func (k *Key) calcOKPThumbprint() ([]byte, error) {
 }
 
 func (k *Key) calcEC2Thumbprint() ([]byte, error) {
-	t, ok := k.Params[KeyLabelEC2X]
-	if !ok {
-		return nil, ErrEC2NoPub
-	}
-	x, ok := t.([]byte)
-	if !ok {
-		return nil, ErrInvalidPubKey
-	}
-	t, ok = k.Params[KeyLabelEC2Y]
-	if !ok {
-		return nil, ErrEC2NoPub
-	}
-	y, ok := t.([]byte)
-	if !ok {
-		return nil, ErrInvalidPubKey
-	}
-
-	switch k.Params[KeyLabelEC2Curve] {
-	case CurveP256:
-		if len(x) != curveSize(CurveP256) || len(y) != curveSize(CurveP256) {
-			return nil, ErrInvalidPubKey
-		}
-	case CurveP384:
-		if len(x) != curveSize(CurveP384) || len(y) != curveSize(CurveP384) {
-			return nil, ErrInvalidPubKey
-		}
-	case CurveP521:
-		if len(x) != curveSize(CurveP521) || len(y) != curveSize(CurveP521) {
-			return nil, ErrInvalidPubKey
-		}
-	default:
-		return nil, ErrOpNotSupported
+	err := k.validate(KeyOpReserved)
+	if err != nil {
+		return nil, err
 	}
 
 	m := make(map[int]interface{})
