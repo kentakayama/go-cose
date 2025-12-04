@@ -336,14 +336,19 @@ func NewKeyEC2(alg Algorithm, x, y, d []byte) (*Key, error) {
 			KeyLabelEC2Curve: curve,
 		},
 	}
+
+	// RFC 9053 Section 7.1.1 says that x and y leading zero octets
+	// MUST be preserved, but the Go crypto/elliptic package trims them.
+	// Since x, y might be used before marshaling, we add 0x00 padding here.
+	size := curveSize(curve)
 	if x != nil {
-		key.Params[KeyLabelEC2X] = x
+		key.Params[KeyLabelEC2X] = append(make([]byte, size-len(x), size), x...)
 	}
 	if y != nil {
-		key.Params[KeyLabelEC2Y] = y
+		key.Params[KeyLabelEC2Y] = append(make([]byte, size-len(y), size), y...)
 	}
 	if d != nil {
-		key.Params[KeyLabelEC2D] = d
+		key.Params[KeyLabelEC2D] = append(make([]byte, size-len(d), size), d...)
 	}
 	if err := key.validate(KeyOpReserved); err != nil {
 		return nil, err
