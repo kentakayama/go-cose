@@ -866,6 +866,14 @@ func TestNewKeyOKP(t *testing.T) {
 			name: "x and d missing", args: args{AlgorithmEdDSA, nil, nil},
 			want:    nil,
 			wantErr: "invalid key: required parameters missing",
+		}, {
+			name: "invalid x", args: args{AlgorithmEdDSA, x[:31], d},
+			want:    nil,
+			wantErr: errCoordOverflow.Error(),
+		}, {
+			name: "invalid d", args: args{AlgorithmEdDSA, x, d[:31]},
+			want:    nil,
+			wantErr: errCoordOverflow.Error(),
 		},
 	}
 	for _, tt := range tests {
