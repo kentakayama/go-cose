@@ -781,7 +781,7 @@ func (k *Key) calcOKPThumbprint() ([]byte, error) {
 
 	switch k.Params[KeyLabelOKPCurve] {
 	case CurveEd25519:
-		if len(x) != 32 {
+		if len(x) != ed25519.PublicKeySize {
 			return nil, ErrInvalidPubKey
 		}
 	case CurveEd448:
@@ -801,9 +801,9 @@ func (k *Key) calcOKPThumbprint() ([]byte, error) {
 	}
 
 	m := make(map[int]interface{})
-	m[1] = k.Type
-	m[-1] = k.Params[KeyLabelOKPCurve]
-	m[-2] = k.Params[KeyLabelEC2X]
+	m[int(keyLabelKeyType)] = k.Type
+	m[int(KeyLabelOKPCurve)] = k.Params[KeyLabelOKPCurve]
+	m[int(KeyLabelOKPX)] = k.Params[KeyLabelOKPX]
 	return encMode.Marshal(m)
 }
 
@@ -827,15 +827,15 @@ func (k *Key) calcEC2Thumbprint() ([]byte, error) {
 
 	switch k.Params[KeyLabelEC2Curve] {
 	case CurveP256:
-		if len(x) != 32 || len(y) != 32 {
+		if len(x) != curveSize(CurveP256) || len(y) != curveSize(CurveP256) {
 			return nil, ErrInvalidPubKey
 		}
 	case CurveP384:
-		if len(x) != 48 || len(y) != 48 {
+		if len(x) != curveSize(CurveP384) || len(y) != curveSize(CurveP384) {
 			return nil, ErrInvalidPubKey
 		}
 	case CurveP521:
-		if len(x) != 66 || len(y) != 66 {
+		if len(x) != curveSize(CurveP521) || len(y) != curveSize(CurveP521) {
 			return nil, ErrInvalidPubKey
 		}
 	default:
@@ -843,10 +843,10 @@ func (k *Key) calcEC2Thumbprint() ([]byte, error) {
 	}
 
 	m := make(map[int]interface{})
-	m[1] = k.Type
-	m[-1] = k.Params[KeyLabelEC2Curve]
-	m[-2] = x
-	m[-3] = y
+	m[int(keyLabelKeyType)] = k.Type
+	m[int(KeyLabelEC2Curve)] = k.Params[KeyLabelEC2Curve]
+	m[int(KeyLabelEC2X)] = k.Params[KeyLabelEC2X]
+	m[int(KeyLabelEC2Y)] = k.Params[KeyLabelEC2Y]
 	return encMode.Marshal(m)
 }
 
