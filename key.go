@@ -453,12 +453,14 @@ func (k Key) validate(op KeyOp) error {
 			return errReqParamsMissing
 		}
 		if size := curveSize(crv); size > 0 {
-			// RFC 8152 Section 13.1.1 says that x and y leading zero octets
-			// MUST be preserved, but the Go crypto/elliptic package trims them.
-			// So we relax the check here to allow for omitted leading zero
-			// octets, we will add them back when marshaling.
-			if len(x) > size || len(y) > size || len(d) > size {
-				return errCoordOverflow
+			if len(y) == 0 && len(x) == size+1 {
+				return fmt.Errorf("%w: compressed point not supported", ErrInvalidPubKey)
+			}
+			if len(x) != size || len(y) != size {
+				return ErrInvalidPubKey
+			}
+			if len(d) > 0 && len(d) != size {
+				return ErrInvalidPrivKey
 			}
 		}
 		switch crv {
@@ -710,9 +712,6 @@ func (k *Key) PrivateKey() (crypto.PrivateKey, error) {
 	switch alg {
 	case AlgorithmES256, AlgorithmES384, AlgorithmES512:
 		_, x, y, d := k.EC2()
-		if len(x) == 0 || len(y) == 0 {
-			return nil, fmt.Errorf("%w: compressed point not supported", ErrInvalidPrivKey)
-		}
 
 		var curve elliptic.Curve
 		switch alg {

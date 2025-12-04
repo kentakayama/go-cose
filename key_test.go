@@ -1502,6 +1502,17 @@ func TestKey_PrivateKey(t *testing.T) {
 			},
 			"",
 		}, {
+			"CurveP256 compressed x", &Key{
+				Type: KeyTypeEC2,
+				Params: map[any]any{
+					KeyLabelEC2Curve: CurveP256,
+					KeyLabelEC2X:     append([]byte{0x02}, ec256x...),
+					KeyLabelEC2D:     ec256d,
+				},
+			},
+			nil,
+			"invalid private key: compressed point not supported",
+		}, {
 			"CurveP256 missing x and y", &Key{
 				Type: KeyTypeEC2,
 				Params: map[any]any{
@@ -1510,7 +1521,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			"invalid private key: compressed point not supported",
+			ErrInvalidPubKey.Error(),
 		}, {
 			"CurveP384", &Key{
 				Type: KeyTypeEC2,
@@ -1632,7 +1643,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			"invalid key: overflowing coordinate",
+			ErrInvalidPubKey.Error(),
 		}, {
 			"EC2 incorrect y size", &Key{
 				Type: KeyTypeEC2,
@@ -1644,7 +1655,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			"invalid key: overflowing coordinate",
+			ErrInvalidPubKey.Error(),
 		}, {
 			"EC2 incorrect d size", &Key{
 				Type: KeyTypeEC2,
@@ -1656,7 +1667,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			"invalid key: overflowing coordinate",
+			ErrInvalidPrivKey.Error(),
 		},
 	}
 	for _, tt := range tests {
