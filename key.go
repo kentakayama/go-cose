@@ -744,6 +744,112 @@ func (k *Key) PrivateKey() (crypto.PrivateKey, error) {
 	}
 }
 
+func (k *Key) Thumbprint(hash crypto.Hash) ([]byte, error) {
+	if !hash.Available() {
+		return nil, ErrUnavailableHashFunc
+	}
+
+	type thumbprintHandler func() ([]byte, error)
+	handlers := map[KeyType]thumbprintHandler{
+		KeyTypeOKP: k.calcOKPThumbprint,
+		KeyTypeEC2: k.calcEC2Thumbprint,
+	}
+	handler, ok := handlers[k.Type]
+	if !ok {
+		return nil, ErrOpNotSupported
+	}
+
+	toBeHashedData, err := handler()
+	if err != nil {
+		return nil, err
+	}
+
+	h := hash.New()
+	h.Write(toBeHashedData)
+	return h.Sum(nil), nil
+}
+
+func (k *Key) calcOKPThumbprint() ([]byte, error) {
+	t, ok := k.Params[KeyLabelOKPX]
+	if !ok {
+		return nil, ErrOKPNoPub
+	}
+	x, ok := t.([]byte)
+	if !ok {
+		return nil, ErrInvalidPubKey
+	}
+
+	switch k.Params[KeyLabelOKPCurve] {
+	case CurveEd25519:
+		if len(x) != 32 {
+			return nil, ErrInvalidPubKey
+		}
+	case CurveEd448:
+		if len(x) != 57 {
+			return nil, ErrInvalidPubKey
+		}
+	case CurveX25519:
+		if len(x) != 32 {
+			return nil, ErrInvalidPubKey
+		}
+	case CurveX448:
+		if len(x) != 56 {
+			return nil, ErrInvalidPubKey
+		}
+	default:
+		return nil, ErrOpNotSupported
+	}
+
+	m := make(map[int]interface{})
+	m[1] = k.Type
+	m[-1] = k.Params[KeyLabelOKPCurve]
+	m[-2] = k.Params[KeyLabelEC2X]
+	return encMode.Marshal(m)
+}
+
+func (k *Key) calcEC2Thumbprint() ([]byte, error) {
+	t, ok := k.Params[KeyLabelEC2X]
+	if !ok {
+		return nil, ErrEC2NoPub
+	}
+	x, ok := t.([]byte)
+	if !ok {
+		return nil, ErrInvalidPubKey
+	}
+	t, ok = k.Params[KeyLabelEC2Y]
+	if !ok {
+		return nil, ErrEC2NoPub
+	}
+	y, ok := t.([]byte)
+	if !ok {
+		return nil, ErrInvalidPubKey
+	}
+
+	switch k.Params[KeyLabelEC2Curve] {
+	case CurveP256:
+		if len(x) != 32 || len(y) != 32 {
+			return nil, ErrInvalidPubKey
+		}
+	case CurveP384:
+		if len(x) != 48 || len(y) != 48 {
+			return nil, ErrInvalidPubKey
+		}
+	case CurveP521:
+		if len(x) != 66 || len(y) != 66 {
+			return nil, ErrInvalidPubKey
+		}
+	default:
+		return nil, ErrOpNotSupported
+	}
+
+	m := make(map[int]interface{})
+	m[1] = k.Type
+	m[-1] = k.Params[KeyLabelEC2Curve]
+	m[-2] = x
+	m[-3] = y
+	return encMode.Marshal(m)
+}
+
 // AlgorithmOrDefault returns the Algorithm associated with Key. If
 // Key.Algorithm is set, that is what is returned. Otherwise, the algorithm is
 // inferred using Key.Curve. This method does NOT validate that Key.Algorithm,
