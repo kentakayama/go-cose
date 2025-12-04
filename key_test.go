@@ -1511,7 +1511,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			"invalid private key: compressed point not supported",
+			"invalid public key: compressed point not supported",
 		}, {
 			"CurveP256 missing x and y", &Key{
 				Type: KeyTypeEC2,
