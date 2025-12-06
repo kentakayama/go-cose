@@ -869,11 +869,11 @@ func TestNewKeyOKP(t *testing.T) {
 		}, {
 			name: "invalid x", args: args{AlgorithmEdDSA, x[:31], d},
 			want:    nil,
-			wantErr: errCoordOverflow.Error(),
+			wantErr: errCoordSizeMismatch.Error(),
 		}, {
 			name: "invalid d", args: args{AlgorithmEdDSA, x, d[:31]},
 			want:    nil,
-			wantErr: errCoordOverflow.Error(),
+			wantErr: errCoordSizeMismatch.Error(),
 		},
 	}
 	for _, tt := range tests {
@@ -1520,8 +1520,15 @@ func TestKey_PrivateKey(t *testing.T) {
 					KeyLabelEC2D:     ec256d,
 				},
 			},
-			nil,
-			ErrInvalidPubKey.Error(),
+			&ecdsa.PrivateKey{
+				PublicKey: ecdsa.PublicKey{
+					Curve: elliptic.P256(),
+					X:     new(big.Int).SetBytes([]byte{}),
+					Y:     new(big.Int).SetBytes([]byte{}),
+				},
+				D: new(big.Int).SetBytes(ec256d),
+			},
+			"",
 		}, {
 			"CurveP384", &Key{
 				Type: KeyTypeEC2,
@@ -1597,7 +1604,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			"invalid key: overflowing coordinate",
+			errCoordSizeMismatch.Error(),
 		}, {
 			"OKP incorrect d size", &Key{
 				Type: KeyTypeOKP,
@@ -1608,7 +1615,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			"invalid key: overflowing coordinate",
+			errCoordSizeMismatch.Error(),
 		}, {
 			"EC2 missing D", &Key{
 				Type: KeyTypeEC2,
@@ -1643,7 +1650,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"EC2 incorrect y size", &Key{
 				Type: KeyTypeEC2,
@@ -1655,7 +1662,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"EC2 incorrect d size", &Key{
 				Type: KeyTypeEC2,
@@ -1667,7 +1674,7 @@ func TestKey_PrivateKey(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPrivKey.Error(),
+			errCoordSizeMismatch.Error(),
 		},
 	}
 	for _, tt := range tests {
