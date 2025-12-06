@@ -439,7 +439,7 @@ func (k Key) validate(op KeyOp) error {
 	switch k.Type {
 	case KeyTypeEC2:
 		crv, x, y, d := k.EC2()
-		// Check required paraemeters exist
+		// Check that required parameters are present based on the key operation.
 		switch op {
 		case KeyOpVerify:
 			if x == nil || y == nil {
@@ -454,7 +454,7 @@ func (k Key) validate(op KeyOp) error {
 			return errReqParamsMissing
 		}
 
-		// Then, validate their length if exist and if the size is known
+		// If the curve size is known, validate the length of each parameter if present.
 		if size := curveSize(crv); size > 0 {
 			if len(y) == 0 && len(x) == size+1 {
 				// NOTE: RFC 9053 Section 7.1.1 describes compressed points in COSE_Key
@@ -474,6 +474,8 @@ func (k Key) validate(op KeyOp) error {
 				// Consider revisiting this logic in a future update.
 				return fmt.Errorf("%w: compressed point not supported", ErrInvalidPubKey)
 			}
+
+			// If present, x, y, and d must match the expected size.
 			if len(x) > 0 && len(x) != size {
 				return errCoordSizeMismatch
 			}
@@ -493,7 +495,7 @@ func (k Key) validate(op KeyOp) error {
 		}
 	case KeyTypeOKP:
 		crv, x, d := k.OKP()
-		// Check required paraemeters exist
+		// Check that required parameters are present based on the key operation.
 		switch op {
 		case KeyOpVerify:
 			if x == nil {
@@ -508,7 +510,7 @@ func (k Key) validate(op KeyOp) error {
 			return errReqParamsMissing
 		}
 
-		// Then, validate their length if exist and if the size is known
+		// If present, x and d must match the expected size.
 		if len(x) > 0 && len(x) != ed25519.PublicKeySize {
 			return errCoordSizeMismatch
 		}
