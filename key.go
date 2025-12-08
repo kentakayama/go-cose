@@ -340,7 +340,7 @@ func NewKeyEC2(alg Algorithm, x, y, d []byte) (*Key, error) {
 	// RFC 9053 Section 7.1.1 says that x and y leading zero octets
 	// MUST be preserved, but the Go crypto/elliptic package trims them.
 	// Since x, y might be used before marshaling, we add 0x00 padding here.
-	size := curveSize(curve)
+	size := keySizeEC2(curve)
 	if x != nil {
 		key.Params[KeyLabelEC2X] = append(make([]byte, size-len(x), size), x...)
 	}
@@ -455,7 +455,7 @@ func (k Key) validate(op KeyOp) error {
 		}
 
 		// If the curve size is known, validate the length of each parameter if present.
-		if size := curveSize(crv); size > 0 {
+		if size := keySizeEC2(crv); size > 0 {
 			if len(y) == 0 && len(x) == size+1 {
 				// NOTE: RFC 9053 Section 7.1.1 describes compressed points in COSE_Key
 				// using a boolean y-coordinate value (false/true). However, this code
@@ -510,12 +510,15 @@ func (k Key) validate(op KeyOp) error {
 			return errReqParamsMissing
 		}
 
-		// If present, x and d must match the expected size.
-		if len(x) > 0 && len(x) != ed25519.PublicKeySize {
-			return errCoordSizeMismatch
-		}
-		if len(d) > 0 && len(d) != ed25519.SeedSize {
-			return errCoordSizeMismatch
+		// If the curve size is known, validate the length of each parameter if present.
+		if size := keySizeOKP(crv); size > 0 {
+			// If present, x and d must match the expected size.
+			if len(x) > 0 && len(x) != size {
+				return errCoordSizeMismatch
+			}
+			if len(d) > 0 && len(d) != size {
+				return errCoordSizeMismatch
+			}
 		}
 		switch crv {
 		case CurveP256, CurveP384, CurveP521:
@@ -598,7 +601,7 @@ func (k *Key) MarshalCBOR() ([]byte, error) {
 	if k.Type == KeyTypeEC2 {
 		// If EC2 key, ensure that x and y are padded to the correct size.
 		crv, x, y, _ := k.EC2()
-		if size := curveSize(crv); size > 0 {
+		if size := keySizeEC2(crv); size > 0 {
 			if 0 < len(x) && len(x) < size {
 				tmp[KeyLabelEC2X] = append(make([]byte, size-len(x), size), x...)
 			}
@@ -931,9 +934,10 @@ func algorithmFromEllipticCurve(c elliptic.Curve) Algorithm {
 	}
 }
 
-func curveSize(crv Curve) int {
+func keySizeEC2(crv Curve) int {
 	var bitSize int
 	switch crv {
+	// SEC 1: Standards for Efficient Cryptography
 	case CurveP256:
 		bitSize = elliptic.P256().Params().BitSize
 	case CurveP384:
@@ -942,6 +946,25 @@ func curveSize(crv Curve) int {
 		bitSize = elliptic.P521().Params().BitSize
 	}
 	return (bitSize + 7) / 8
+}
+
+func keySizeOKP(crv Curve) int {
+	switch crv {
+	// RFC 8032: Edwards-Curve Digital Signature Algorithm (EdDSA)
+	case CurveEd25519:
+		return ed25519.PublicKeySize // 32
+	case CurveEd448:
+		return 57
+
+	// RFC 7748: Elliptic Curves for Security
+	case CurveX25519:
+		return 32
+	case CurveX448:
+		return 56
+
+	default:
+		return 0
+	}
 }
 
 func decodeBytes(dic map[any]any, lbl any) (b []byte, ok bool, err error) {
