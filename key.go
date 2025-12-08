@@ -770,7 +770,8 @@ func (k *Key) Thumbprint(hash crypto.Hash) ([]byte, error) {
 }
 
 func (k *Key) calcOKPThumbprint() ([]byte, error) {
-	err := k.validate(KeyOpReserved)
+	// validate(KeyOpVerify) ensures the existence and validity of "kty", "crv" and "x"
+	err := k.validate(KeyOpVerify)
 	if err != nil {
 		return nil, err
 	}
@@ -783,7 +784,8 @@ func (k *Key) calcOKPThumbprint() ([]byte, error) {
 }
 
 func (k *Key) calcEC2Thumbprint() ([]byte, error) {
-	err := k.validate(KeyOpReserved)
+	// validate(KeyOpVerify) ensures the existence and validity of "kty", "crv", "x" and "y"
+	err := k.validate(KeyOpVerify)
 	if err != nil {
 		return nil, err
 	}
