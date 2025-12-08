@@ -2049,7 +2049,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			ErrEC2NoPub.Error(),
 		}, {
 			"EC2 P256 with short x",
 			crypto.SHA256,
@@ -2062,7 +2062,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"EC2 P384 with short x",
 			crypto.SHA256,
@@ -2075,7 +2075,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"EC2 P521 with short x",
 			crypto.SHA256,
@@ -2088,7 +2088,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"EC2 with missing y",
 			crypto.SHA256,
@@ -2113,7 +2113,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			ErrEC2NoPub.Error(),
 		}, {
 			"EC2 P256 with short y",
 			crypto.SHA256,
@@ -2126,7 +2126,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"EC2 P384 with short y",
 			crypto.SHA256,
@@ -2139,7 +2139,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"EC2 P521 with short y",
 			crypto.SHA256,
@@ -2152,7 +2152,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"EC2 with invalid crv",
 			crypto.SHA256,
@@ -2165,7 +2165,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrOpNotSupported.Error(),
+			errInvalidCurve.Error(),
 		}, {
 			"OKP with missing X",
 			crypto.SHA256,
@@ -2188,7 +2188,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			ErrOKPNoPub.Error(),
 		}, {
 			"OKP Ed25519 with short x",
 			crypto.SHA256,
@@ -2200,7 +2200,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"OKP Ed448 with short x",
 			crypto.SHA256,
@@ -2212,7 +2212,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"OKP X25519 with short x",
 			crypto.SHA256,
@@ -2224,7 +2224,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"OKP X448 with short x",
 			crypto.SHA256,
@@ -2236,7 +2236,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrInvalidPubKey.Error(),
+			errCoordSizeMismatch.Error(),
 		}, {
 			"OKP with missing crv",
 			crypto.SHA256,
@@ -2247,7 +2247,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrOpNotSupported.Error(),
+			errReqParamsMissing.Error(),
 		}, {
 			"OKP with invalid crv",
 			crypto.SHA256,
@@ -2259,7 +2259,7 @@ func TestKey_Thumbprint(t *testing.T) {
 				},
 			},
 			nil,
-			ErrOpNotSupported.Error(),
+			errInvalidCurve.Error(),
 		},
 	}
 	for _, tt := range tests {
