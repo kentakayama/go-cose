@@ -60,7 +60,7 @@ func NewVerifier(alg Algorithm, key crypto.PublicKey) (Verifier, error) {
 			alg: alg,
 			key: vk,
 		}, nil
-	case AlgorithmES256, AlgorithmES384, AlgorithmES512:
+	case AlgorithmES256, AlgorithmES384, AlgorithmES512, AlgorithmESP256, AlgorithmESP384, AlgorithmESP512:
 		vk, ok := key.(*ecdsa.PublicKey)
 		if !ok {
 			return nil, fmt.Errorf("%v: %w", alg, ErrInvalidPubKey)
@@ -75,7 +75,7 @@ func NewVerifier(alg Algorithm, key crypto.PublicKey) (Verifier, error) {
 			alg: alg,
 			key: vk,
 		}, nil
-	case AlgorithmEdDSA:
+	case AlgorithmEdDSA, AlgorithmEd25519EdDSA:
 		vk, ok := key.(ed25519.PublicKey)
 		if !ok {
 			return nil, fmt.Errorf("%v: %w", alg, ErrInvalidPubKey)

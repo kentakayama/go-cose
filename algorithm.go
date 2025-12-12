@@ -24,23 +24,57 @@ const (
 
 	// ECDSA w/ SHA-256 by RFC 8152.
 	// Requires an available crypto.SHA256.
+	//
+	// Deprecated: ONLY IF you aware that the recipient supports
+	// [AlgorithmESP256], use it instead. Otherwise,
+	// keep use [AlgorithmES256] for backward compatibility.
 	AlgorithmES256 Algorithm = -7
+
+	// ECDSA using P-256 curve and SHA-256 by RFC 9864.
+	// Requires an available crypto.SHA256.
+	AlgorithmESP256 Algorithm = -9
 
 	// ECDSA w/ SHA-384 by RFC 8152.
 	// Requires an available crypto.SHA384.
+	//
+	// Deprecated: ONLY IF you aware that the recipient supports
+	// [AlgorithmESP384], use it instead. Otherwise,
+	// keep use [AlgorithmES384] for backward compatibility.
 	AlgorithmES384 Algorithm = -35
+
+	// ECDSA using P-384 curve and SHA-384 by RFC 9864.
+	// Requires an available crypto.SHA384.
+	AlgorithmESP384 Algorithm = -51
 
 	// ECDSA w/ SHA-512 by RFC 8152.
 	// Requires an available crypto.SHA512.
+	//
+	// Deprecated: ONLY IF you aware that the recipient supports
+	// [AlgorithmESP512], use it instead. Otherwise,
+	// keep use [AlgorithmES512] for backward compatibility.
 	AlgorithmES512 Algorithm = -36
+
+	// ECDSA using P-521 curve and SHA-512 by RFC 9864.
+	// Requires an available crypto.SHA512.
+	AlgorithmESP512 Algorithm = -52
+
+	// EdDSA using the Ed25519 parameter (Curve25519) by RFC 9864.
+	AlgorithmEd25519EdDSA Algorithm = -19
 
 	// PureEdDSA by RFC 8152.
 	//
 	// Deprecated: use [AlgorithmEdDSA] instead, which has
 	// the same value but with a more accurate name.
+	// ONLY IF you aware that the recipient supports
+	// [AlgorithmEd25519EdDSA] (-19), use it instead. Otherwise,
+	// keep use [AlgorithmEdDSA] for backward compatibility.
 	AlgorithmEd25519 Algorithm = -8
 
 	// PureEdDSA by RFC 8152.
+	//
+	// Deprecated: ONLY IF you aware that the recipient supports
+	// [AlgorithmEd25519EdDSA] (-19), use it instead. Otherwise,
+	// keep use [AlgorithmEdDSA] for backward compatibility.
 	AlgorithmEdDSA Algorithm = -8
 )
 
@@ -104,14 +138,24 @@ func (a Algorithm) String() string {
 		return "RS512"
 	case AlgorithmES256:
 		return "ES256"
+	case AlgorithmESP256:
+		return "ESP256"
 	case AlgorithmES384:
 		return "ES384"
+	case AlgorithmESP384:
+		return "ESP384"
 	case AlgorithmES512:
 		return "ES512"
+	case AlgorithmESP512:
+		return "ESP512"
 	case AlgorithmEdDSA:
 		// As stated in RFC 8152 section 8.2, only the pure EdDSA version is
 		// used for COSE.
 		return "EdDSA"
+	case AlgorithmEd25519EdDSA:
+		// As stated in RFC 8152 section 8.2, only the pure EdDSA version is
+		// used for COSE.
+		return "Ed25519"
 	case AlgorithmReserved:
 		return "Reserved"
 	case AlgorithmSHA256:
@@ -129,11 +173,11 @@ func (a Algorithm) String() string {
 // library.
 func (a Algorithm) hashFunc() crypto.Hash {
 	switch a {
-	case AlgorithmPS256, AlgorithmES256, AlgorithmSHA256:
+	case AlgorithmPS256, AlgorithmES256, AlgorithmESP256, AlgorithmSHA256:
 		return crypto.SHA256
-	case AlgorithmPS384, AlgorithmES384, AlgorithmSHA384:
+	case AlgorithmPS384, AlgorithmES384, AlgorithmESP384, AlgorithmSHA384:
 		return crypto.SHA384
-	case AlgorithmPS512, AlgorithmES512, AlgorithmSHA512:
+	case AlgorithmPS512, AlgorithmES512, AlgorithmESP512, AlgorithmSHA512:
 		return crypto.SHA512
 	default:
 		return 0
