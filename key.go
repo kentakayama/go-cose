@@ -546,7 +546,7 @@ func (k Key) validate(op KeyOp) error {
 			return err
 		}
 
-		if containsAlg(expectedAlgs, k.Algorithm) {
+		if !containsAlg(expectedAlgs, k.Algorithm) {
 			strs := make([]string, len(expectedAlgs))
 			for i, a := range expectedAlgs {
 				strs[i] = a.String()
