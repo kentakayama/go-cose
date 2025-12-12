@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -540,21 +541,34 @@ func (k Key) validate(op KeyOp) error {
 
 	// If Algorithm is set, it must match the specified key parameters.
 	if k.Algorithm != AlgorithmReserved {
-		expectedAlg, err := k.deriveAlgorithm()
+		expectedAlgs, err := k.deriveAlgorithm()
 		if err != nil {
 			return err
 		}
 
-		if k.Algorithm != expectedAlg {
+		if containsAlg(expectedAlgs, k.Algorithm) {
+			strs := make([]string, len(expectedAlgs))
+			for i, a := range expectedAlgs {
+				strs[i] = a.String()
+			}
 			return fmt.Errorf(
-				"found algorithm %q (expected %q)",
+				"found algorithm %q (expected one of {%q})",
 				k.Algorithm.String(),
-				expectedAlg.String(),
+				strings.Join(strs, ","),
 			)
 		}
 	}
 
 	return nil
+}
+
+func containsAlg(algs []Algorithm, target Algorithm) bool {
+	for _, a := range algs {
+		if a == target {
+			return true
+		}
+	}
+	return false
 }
 
 func (k Key) canOp(op KeyOp) bool {
@@ -891,33 +905,33 @@ func (k *Key) Verifier() (Verifier, error) {
 // The derivation is based on the recommendation in RFC 8152 that SHA-256 is
 // only used with P-256, etc. For other combinations, the Algorithm in the Key
 // must be explicitly set,so that this derivation is not used.
-func (k *Key) deriveAlgorithm() (Algorithm, error) {
+func (k *Key) deriveAlgorithm() ([]Algorithm, error) {
 	switch k.Type {
 	case KeyTypeEC2:
 		crv, _, _, _ := k.EC2()
 		switch crv {
 		case CurveP256:
-			return AlgorithmES256, nil
+			return []Algorithm{AlgorithmES256, AlgorithmESP256}, nil
 		case CurveP384:
-			return AlgorithmES384, nil
+			return []Algorithm{AlgorithmES384, AlgorithmESP384}, nil
 		case CurveP521:
-			return AlgorithmES512, nil
+			return []Algorithm{AlgorithmES512, AlgorithmESP512}, nil
 		default:
-			return AlgorithmReserved, fmt.Errorf(
+			return []Algorithm{}, fmt.Errorf(
 				"unsupported curve %q for key type EC2", crv.String())
 		}
 	case KeyTypeOKP:
 		crv, _, _ := k.OKP()
 		switch crv {
 		case CurveEd25519:
-			return AlgorithmEdDSA, nil
+			return []Algorithm{AlgorithmEdDSA, AlgorithmEd25519EdDSA}, nil
 		default:
-			return AlgorithmReserved, fmt.Errorf(
+			return []Algorithm{}, fmt.Errorf(
 				"unsupported curve %q for key type OKP", crv.String())
 		}
 	default:
 		// Symmetric algorithms are not supported in the current implementation.
-		return AlgorithmReserved, fmt.Errorf("unexpected key type %q", k.Type.String())
+		return []Algorithm{}, fmt.Errorf("unexpected key type %q", k.Type.String())
 	}
 }
 
