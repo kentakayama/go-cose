@@ -711,21 +711,21 @@ func (k *Key) PublicKey() (crypto.PublicKey, error) {
 	if err := k.validate(KeyOpVerify); err != nil {
 		return nil, err
 	}
-	alg, err := k.deriveAlgorithm()
+	algs, err := k.deriveAlgorithm()
 	if err != nil {
 		return nil, err
 	}
 
-	switch alg {
-	case AlgorithmES256, AlgorithmES384, AlgorithmES512:
+	switch algs[0] {
+	case AlgorithmES256, AlgorithmES384, AlgorithmES512, AlgorithmESP256, AlgorithmESP384, AlgorithmESP512:
 		var curve elliptic.Curve
 
-		switch alg {
-		case AlgorithmES256:
+		switch algs[0] {
+		case AlgorithmES256, AlgorithmESP256:
 			curve = elliptic.P256()
-		case AlgorithmES384:
+		case AlgorithmES384, AlgorithmESP384:
 			curve = elliptic.P384()
-		case AlgorithmES512:
+		case AlgorithmES512, AlgorithmESP512:
 			curve = elliptic.P521()
 		}
 
@@ -736,7 +736,7 @@ func (k *Key) PublicKey() (crypto.PublicKey, error) {
 		pub.Y.SetBytes(y)
 
 		return pub, nil
-	case AlgorithmEdDSA:
+	case AlgorithmEdDSA, AlgorithmEd25519EdDSA:
 		_, x, _ := k.OKP()
 		return ed25519.PublicKey(x), nil
 	default:
@@ -750,22 +750,22 @@ func (k *Key) PrivateKey() (crypto.PrivateKey, error) {
 	if err := k.validate(KeyOpSign); err != nil {
 		return nil, err
 	}
-	alg, err := k.deriveAlgorithm()
+	algs, err := k.deriveAlgorithm()
 	if err != nil {
 		return nil, err
 	}
 
-	switch alg {
-	case AlgorithmES256, AlgorithmES384, AlgorithmES512:
+	switch algs[0] {
+	case AlgorithmES256, AlgorithmES384, AlgorithmES512, AlgorithmESP256, AlgorithmESP384, AlgorithmESP512:
 		_, x, y, d := k.EC2()
 
 		var curve elliptic.Curve
-		switch alg {
-		case AlgorithmES256:
+		switch algs[0] {
+		case AlgorithmES256, AlgorithmESP256:
 			curve = elliptic.P256()
-		case AlgorithmES384:
+		case AlgorithmES384, AlgorithmESP384:
 			curve = elliptic.P384()
-		case AlgorithmES512:
+		case AlgorithmES512, AlgorithmESP512:
 			curve = elliptic.P521()
 		}
 
@@ -777,7 +777,7 @@ func (k *Key) PrivateKey() (crypto.PrivateKey, error) {
 			PublicKey: ecdsa.PublicKey{Curve: curve, X: bx, Y: by},
 			D:         bd,
 		}, nil
-	case AlgorithmEdDSA:
+	case AlgorithmEdDSA, AlgorithmEd25519EdDSA:
 		_, x, d := k.OKP()
 		if len(x) == 0 {
 			return ed25519.NewKeyFromSeed(d), nil
@@ -856,8 +856,8 @@ func (k *Key) AlgorithmOrDefault() (Algorithm, error) {
 	if k.Algorithm != AlgorithmReserved {
 		return k.Algorithm, nil
 	}
-
-	return k.deriveAlgorithm()
+	algs, err := k.deriveAlgorithm()
+	return algs[0], err
 }
 
 // Signer returns a Signer created using Key.
@@ -917,7 +917,7 @@ func (k *Key) deriveAlgorithm() ([]Algorithm, error) {
 		case CurveP521:
 			return []Algorithm{AlgorithmES512, AlgorithmESP512}, nil
 		default:
-			return []Algorithm{}, fmt.Errorf(
+			return []Algorithm{AlgorithmReserved}, fmt.Errorf(
 				"unsupported curve %q for key type EC2", crv.String())
 		}
 	case KeyTypeOKP:
@@ -926,12 +926,12 @@ func (k *Key) deriveAlgorithm() ([]Algorithm, error) {
 		case CurveEd25519:
 			return []Algorithm{AlgorithmEdDSA, AlgorithmEd25519EdDSA}, nil
 		default:
-			return []Algorithm{}, fmt.Errorf(
+			return []Algorithm{AlgorithmReserved}, fmt.Errorf(
 				"unsupported curve %q for key type OKP", crv.String())
 		}
 	default:
 		// Symmetric algorithms are not supported in the current implementation.
-		return []Algorithm{}, fmt.Errorf("unexpected key type %q", k.Type.String())
+		return []Algorithm{AlgorithmReserved}, fmt.Errorf("unexpected key type %q", k.Type.String())
 	}
 }
 
