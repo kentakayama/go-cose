@@ -58,10 +58,6 @@ const (
 	// Requires an available crypto.SHA512.
 	AlgorithmESP512 Algorithm = -52
 
-	// EdDSA restricted to the Ed25519 curve, as defined in RFC 9864.
-	// This algorithm is newer and may not be supported by all COSE libraries.
-	AlgorithmEd25519EdDSA Algorithm = -19
-
 	// PureEdDSA by RFC 8152.
 	//
 	// Deprecated: use [AlgorithmEdDSA] instead, which has
@@ -74,6 +70,10 @@ const (
 	// supports it. For maximum interoperability and backward compatibility,
 	// AlgorithmEdDSA should remain the default choice.
 	AlgorithmEdDSA Algorithm = -8
+
+	// EdDSA restricted to the Ed25519 curve, as defined in RFC 9864.
+	// This algorithm is newer and may not be supported by all COSE libraries.
+	AlgorithmEd25519EdDSA Algorithm = -19
 )
 
 // Signature algorithms known, but not supported by this library.
