@@ -175,6 +175,7 @@ func generateTestECDSAKey(t *testing.T) *ecdsa.PrivateKey {
 func Test_ecdsaKeySigner(t *testing.T) {
 	key := generateTestECDSAKey(t)
 	testSignVerify(t, AlgorithmES256, key, false)
+	testSignVerify(t, AlgorithmESP256, key, false)
 }
 
 func Test_ecdsaCryptoSigner(t *testing.T) {
@@ -184,6 +185,7 @@ func Test_ecdsaCryptoSigner(t *testing.T) {
 		Signer: generateTestECDSAKey(t),
 	}
 	testSignVerify(t, AlgorithmES256, wrappedKey, true)
+	testSignVerify(t, AlgorithmESP256, wrappedKey, true)
 }
 
 func testSignVerify(t *testing.T, alg Algorithm, key crypto.Signer, isCryptoSigner bool) {
@@ -256,6 +258,7 @@ func Test_ecdsaBadCryptoSigner_SignFailure(t *testing.T) {
 		err:    errors.New("sign failure"),
 	}
 	testSignFailure(t, AlgorithmES256, badSigner)
+	testSignFailure(t, AlgorithmESP256, badSigner)
 }
 
 func Test_ecdsaBadCryptoSigner_BadSignature(t *testing.T) {
@@ -267,6 +270,7 @@ func Test_ecdsaBadCryptoSigner_BadSignature(t *testing.T) {
 		signature: nil,
 	}
 	testSignFailure(t, AlgorithmES256, badSigner)
+	testSignFailure(t, AlgorithmESP256, badSigner)
 
 	// malformed signature: bad r
 	sig, err := asn1.Marshal(struct {
@@ -283,6 +287,7 @@ func Test_ecdsaBadCryptoSigner_BadSignature(t *testing.T) {
 		signature: sig,
 	}
 	testSignFailure(t, AlgorithmES256, badSigner)
+	testSignFailure(t, AlgorithmESP256, badSigner)
 
 	// malformed signature: bad s
 	sig, err = asn1.Marshal(struct {
@@ -299,6 +304,7 @@ func Test_ecdsaBadCryptoSigner_BadSignature(t *testing.T) {
 		signature: sig,
 	}
 	testSignFailure(t, AlgorithmES256, badSigner)
+	testSignFailure(t, AlgorithmESP256, badSigner)
 }
 
 func Test_ecdsaKeySigner_SignHashFailure(t *testing.T) {
@@ -332,69 +338,99 @@ func testSignFailure(t *testing.T, alg Algorithm, key crypto.Signer) {
 }
 
 func Test_ecdsaVerifier_Verify_Success(t *testing.T) {
-	// generate key
-	alg := AlgorithmES256
-	key := generateTestECDSAKey(t)
-
-	// generate a valid signature
-	content, sig := signTestData(t, alg, key)
-
-	// set up verifier
-	verifier, err := NewVerifier(alg, key.Public())
-	if err != nil {
-		t.Fatalf("NewVerifier() error = %v", err)
+	tests := []struct {
+		name string
+		alg  Algorithm
+	}{
+		{"ES256", AlgorithmES256},
+		{"ESP256", AlgorithmESP256},
 	}
-	if _, ok := verifier.(*ecdsaVerifier); !ok {
-		t.Fatalf("NewVerifier() type = %v, want *ecdsaVerifier", reflect.TypeOf(verifier))
-	}
-	if got := verifier.Algorithm(); got != alg {
-		t.Fatalf("Algorithm() = %v, want %v", got, alg)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// generate key
+			key := generateTestECDSAKey(t)
 
-	// verify round trip
-	if err := verifier.Verify(content, sig); err != nil {
-		t.Fatalf("ecdsaVerifier.Verify() error = %v", err)
+			// generate a valid signature
+			content, sig := signTestData(t, tt.alg, key)
+
+			// set up verifier
+			verifier, err := NewVerifier(tt.alg, key.Public())
+			if err != nil {
+				t.Fatalf("NewVerifier() error = %v", err)
+			}
+			if _, ok := verifier.(*ecdsaVerifier); !ok {
+				t.Fatalf("NewVerifier() type = %v, want *ecdsaVerifier", reflect.TypeOf(verifier))
+			}
+			if got := verifier.Algorithm(); got != tt.alg {
+				t.Fatalf("Algorithm() = %v, want %v", got, tt.alg)
+			}
+
+			// verify round trip
+			if err := verifier.Verify(content, sig); err != nil {
+				t.Fatalf("ecdsaVerifier.Verify() error = %v", err)
+			}
+		})
 	}
 }
 
 func Test_ecdsaVerifier_Verify_AlgorithmMismatch(t *testing.T) {
-	// generate key
-	alg := AlgorithmES256
-	key := generateTestECDSAKey(t)
-
-	// generate a valid signature
-	content, sig := signTestData(t, alg, key)
-
-	// set up verifier with a different algorithm
-	verifier := &ecdsaVerifier{
-		alg: AlgorithmES512,
-		key: &key.PublicKey,
+	tests := []struct {
+		name string
+		alg  Algorithm
+	}{
+		{"ES256", AlgorithmES256},
+		{"ESP256", AlgorithmESP256},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// generate key
+			key := generateTestECDSAKey(t)
 
-	// verification should fail on algorithm mismatch
-	if err := verifier.Verify(content, sig); err != ErrVerification {
-		t.Fatalf("ecdsaVerifier.Verify() error = %v, wantErr %v", err, ErrVerification)
+			// generate a valid signature
+			content, sig := signTestData(t, tt.alg, key)
+
+			// set up verifier with a different algorithm
+			verifier := &ecdsaVerifier{
+				alg: AlgorithmES512,
+				key: &key.PublicKey,
+			}
+
+			// verification should fail on algorithm mismatch
+			if err := verifier.Verify(content, sig); err != ErrVerification {
+				t.Fatalf("ecdsaVerifier.Verify() error = %v, wantErr %v", err, ErrVerification)
+			}
+		})
 	}
 }
 
 func Test_ecdsaVerifier_Verify_KeyMismatch(t *testing.T) {
-	// generate key
-	alg := AlgorithmES256
-	key := generateTestECDSAKey(t)
-
-	// generate a valid signature
-	content, sig := signTestData(t, alg, key)
-
-	// set up verifier with a different key / new key
-	key = generateTestECDSAKey(t)
-	verifier := &ecdsaVerifier{
-		alg: alg,
-		key: &key.PublicKey,
+	tests := []struct {
+		name string
+		alg  Algorithm
+	}{
+		{"ES256", AlgorithmES256},
+		{"ESP256", AlgorithmESP256},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// generate key
+			key := generateTestECDSAKey(t)
 
-	// verification should fail on key mismatch
-	if err := verifier.Verify(content, sig); err != ErrVerification {
-		t.Fatalf("ecdsaVerifier.Verify() error = %v, wantErr %v", err, ErrVerification)
+			// generate a valid signature
+			content, sig := signTestData(t, tt.alg, key)
+
+			// set up verifier with a different key / new key
+			key = generateTestECDSAKey(t)
+			verifier := &ecdsaVerifier{
+				alg: tt.alg,
+				key: &key.PublicKey,
+			}
+
+			// verification should fail on key mismatch
+			if err := verifier.Verify(content, sig); err != ErrVerification {
+				t.Fatalf("ecdsaVerifier.Verify() error = %v, wantErr %v", err, ErrVerification)
+			}
+		})
 	}
 }
 

@@ -938,6 +938,45 @@ func TestNewNewKeyEC2(t *testing.T) {
 			},
 			wantErr: "",
 		}, {
+			name: "valid ESP256", args: args{AlgorithmESP256, ec256x, ec256y, ec256d},
+			want: &Key{
+				Type:      KeyTypeEC2,
+				Algorithm: AlgorithmESP256,
+				Params: map[any]any{
+					KeyLabelEC2Curve: CurveP256,
+					KeyLabelEC2X:     ec256x,
+					KeyLabelEC2Y:     ec256y,
+					KeyLabelEC2D:     ec256d,
+				},
+			},
+			wantErr: "",
+		}, {
+			name: "valid ESP384", args: args{AlgorithmESP384, ec384x, ec384y, ec384d},
+			want: &Key{
+				Type:      KeyTypeEC2,
+				Algorithm: AlgorithmESP384,
+				Params: map[any]any{
+					KeyLabelEC2Curve: CurveP384,
+					KeyLabelEC2X:     ec384x,
+					KeyLabelEC2Y:     ec384y,
+					KeyLabelEC2D:     ec384d,
+				},
+			},
+			wantErr: "",
+		}, {
+			name: "valid ESP521", args: args{AlgorithmESP512, ec521x, ec521y, ec521d},
+			want: &Key{
+				Type:      KeyTypeEC2,
+				Algorithm: AlgorithmESP512,
+				Params: map[any]any{
+					KeyLabelEC2Curve: CurveP521,
+					KeyLabelEC2X:     ec521x,
+					KeyLabelEC2Y:     ec521y,
+					KeyLabelEC2D:     ec521d,
+				},
+			},
+			wantErr: "",
+		}, {
 			name: "invalid alg", args: args{Algorithm(-100), ec256x, ec256y, ec256d},
 			want:    nil,
 			wantErr: `unsupported algorithm "Algorithm(-100)"`,

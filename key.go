@@ -320,11 +320,11 @@ func NewKeyEC2(alg Algorithm, x, y, d []byte) (*Key, error) {
 	var curve Curve
 
 	switch alg {
-	case AlgorithmES256:
+	case AlgorithmES256, AlgorithmESP256:
 		curve = CurveP256
-	case AlgorithmES384:
+	case AlgorithmES384, AlgorithmESP384:
 		curve = CurveP384
-	case AlgorithmES512:
+	case AlgorithmES512, AlgorithmESP512:
 		curve = CurveP521
 	default:
 		return nil, fmt.Errorf("unsupported algorithm %q", alg)

@@ -81,6 +81,7 @@ func NewVerifier(alg Algorithm, key crypto.PublicKey) (Verifier, error) {
 			return nil, fmt.Errorf("%v: %w", alg, ErrInvalidPubKey)
 		}
 		return &ed25519Verifier{
+			alg: alg,
 			key: vk,
 		}, nil
 	case AlgorithmReserved:

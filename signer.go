@@ -69,7 +69,7 @@ func NewSigner(alg Algorithm, key crypto.Signer) (Signer, error) {
 			alg: alg,
 			key: key,
 		}, nil
-	case AlgorithmES256, AlgorithmES384, AlgorithmES512:
+	case AlgorithmES256, AlgorithmES384, AlgorithmES512, AlgorithmESP256, AlgorithmESP384, AlgorithmESP512:
 		vk, ok := key.Public().(*ecdsa.PublicKey)
 		if !ok {
 			return nil, fmt.Errorf("%v: %w", alg, ErrInvalidPubKey)
@@ -85,11 +85,12 @@ func NewSigner(alg Algorithm, key crypto.Signer) (Signer, error) {
 			key:    vk,
 			signer: key,
 		}, nil
-	case AlgorithmEdDSA:
+	case AlgorithmEdDSA, AlgorithmEd25519EdDSA:
 		if _, ok := key.Public().(ed25519.PublicKey); !ok {
 			return nil, fmt.Errorf("%v: %w", alg, ErrInvalidPubKey)
 		}
 		return &ed25519Signer{
+			alg: alg,
 			key: key,
 		}, nil
 	case AlgorithmReserved:

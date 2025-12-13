@@ -80,6 +80,7 @@ func TestNewSigner(t *testing.T) {
 			alg:  AlgorithmEdDSA,
 			key:  ed25519Key,
 			want: &ed25519Signer{
+				alg: AlgorithmEdDSA,
 				key: ed25519Key,
 			},
 		},
