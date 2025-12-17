@@ -476,13 +476,13 @@ func (k Key) validate(op KeyOp) error {
 			}
 
 			// If present, x, y, and d must match the expected size.
-			if len(x) > 0 && len(x) != size {
+			if x != nil && len(x) != size {
 				return errCoordSizeMismatch
 			}
-			if len(y) > 0 && len(y) != size {
+			if y != nil && len(y) != size {
 				return errCoordSizeMismatch
 			}
-			if len(d) > 0 && len(d) != size {
+			if d != nil && len(d) != size {
 				return errCoordSizeMismatch
 			}
 		}
@@ -513,10 +513,10 @@ func (k Key) validate(op KeyOp) error {
 		// If the curve size is known, validate the length of each parameter if present.
 		if size := keySizeOKP(crv); size > 0 {
 			// If present, x and d must match the expected size.
-			if len(x) > 0 && len(x) != size {
+			if x != nil && len(x) != size {
 				return errCoordSizeMismatch
 			}
-			if len(d) > 0 && len(d) != size {
+			if d != nil && len(d) != size {
 				return errCoordSizeMismatch
 			}
 		}
