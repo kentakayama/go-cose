@@ -83,6 +83,7 @@ func TestNewVerifier(t *testing.T) {
 			alg:  AlgorithmEdDSA,
 			key:  ed25519Key,
 			want: &ed25519Verifier{
+				alg: AlgorithmEdDSA,
 				key: ed25519Key,
 			},
 		},

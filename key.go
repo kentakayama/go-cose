@@ -320,11 +320,11 @@ func NewKeyEC2(alg Algorithm, x, y, d []byte) (*Key, error) {
 	var curve Curve
 
 	switch alg {
-	case AlgorithmES256:
+	case AlgorithmES256, AlgorithmESP256:
 		curve = CurveP256
-	case AlgorithmES384:
+	case AlgorithmES384, AlgorithmESP384:
 		curve = CurveP384
-	case AlgorithmES512:
+	case AlgorithmES512, AlgorithmESP512:
 		curve = CurveP521
 	default:
 		return nil, fmt.Errorf("unsupported algorithm %q", alg)
@@ -541,14 +541,14 @@ func (k Key) validate(op KeyOp) error {
 
 	// If Algorithm is set, it must match the specified key parameters.
 	if k.Algorithm != AlgorithmReserved {
-		expectedAlgs, err := k.deriveAlgorithm()
+		candidateAlgs, err := k.deriveAlgorithms()
 		if err != nil {
 			return err
 		}
 
-		if !containsAlg(expectedAlgs, k.Algorithm) {
-			strs := make([]string, len(expectedAlgs))
-			for i, a := range expectedAlgs {
+		if !containsAlg(candidateAlgs, k.Algorithm) {
+			strs := make([]string, len(candidateAlgs))
+			for i, a := range candidateAlgs {
 				strs[i] = a.String()
 			}
 			return fmt.Errorf(
@@ -711,7 +711,7 @@ func (k *Key) PublicKey() (crypto.PublicKey, error) {
 	if err := k.validate(KeyOpVerify); err != nil {
 		return nil, err
 	}
-	algs, err := k.deriveAlgorithm()
+	algs, err := k.deriveAlgorithms()
 	if err != nil {
 		return nil, err
 	}
@@ -750,7 +750,7 @@ func (k *Key) PrivateKey() (crypto.PrivateKey, error) {
 	if err := k.validate(KeyOpSign); err != nil {
 		return nil, err
 	}
-	algs, err := k.deriveAlgorithm()
+	algs, err := k.deriveAlgorithms()
 	if err != nil {
 		return nil, err
 	}
@@ -856,7 +856,7 @@ func (k *Key) AlgorithmOrDefault() (Algorithm, error) {
 	if k.Algorithm != AlgorithmReserved {
 		return k.Algorithm, nil
 	}
-	algs, err := k.deriveAlgorithm()
+	algs, err := k.deriveAlgorithms()
 	return algs[0], err
 }
 
@@ -901,11 +901,22 @@ func (k *Key) Verifier() (Verifier, error) {
 	return NewVerifier(alg, pub)
 }
 
-// deriveAlgorithm derives the intended algorithm for the key from its curve.
-// The derivation is based on the recommendation in RFC 8152 that SHA-256 is
-// only used with P-256, etc. For other combinations, the Algorithm in the Key
-// must be explicitly set,so that this derivation is not used.
-func (k *Key) deriveAlgorithm() ([]Algorithm, error) {
+// deriveAlgorithms returns the set of algorithms implied by the Key.
+// The returned slice always contains at least one Algorithm, and the first
+// element represents the default algorithm for the given Key.
+//
+// For example, {Kty: EC2, Crv: P-256} derives {AlgorithmES256, AlgorithmESP256}.
+//
+// When called from validate(), the returned slice is treated as the set of
+// candidate Algorithms. In most other contexts, only the first element is used
+// as the default Algorithm.
+//
+// The derivation is based on the recommendation in RFC 8152 and RFC 9864 that
+// SHA-256 is only used with P-256, etc.
+//
+// For other combinations, the Algorithm in the Key
+// must be explicitly set, so that this derivation is not used.
+func (k *Key) deriveAlgorithms() ([]Algorithm, error) {
 	switch k.Type {
 	case KeyTypeEC2:
 		crv, _, _, _ := k.EC2()
