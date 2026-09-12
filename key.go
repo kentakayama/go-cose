@@ -243,6 +243,8 @@ type Key struct {
 }
 
 // NewKeyOKP returns a Key created using the provided Octet Key Pair data.
+// Ed25519 public keys and seeds are fixed-length byte strings,
+// not variable-length integers. Reject incorrect lengths rather than padding.
 func NewKeyOKP(alg Algorithm, x, d []byte) (*Key, error) {
 	if alg != AlgorithmEdDSA {
 		return nil, fmt.Errorf("unsupported algorithm %q", alg)
@@ -314,7 +316,9 @@ func (k *Key) OKP() (crv Curve, x []byte, d []byte) {
 }
 
 // NewKeyEC2 returns a Key created using the provided elliptic curve key
-// data.
+// data. Non-nil x, y, and d are left-padded with zeroes to the size
+// required by the curve, as specified in RFC 9053, Section 7.1.1.
+// An error is returned if any of these parameters exceeds that size.
 func NewKeyEC2(alg Algorithm, x, y, d []byte) (*Key, error) {
 	var curve Curve
 
@@ -623,6 +627,9 @@ func (k *Key) MarshalCBOR() ([]byte, error) {
 }
 
 // UnmarshalCBOR decodes a COSE_Key object into Key.
+// Key parameters must have the lengths required for the key type and curve.
+// Parameters with unexpected lengths are rejected, including those shortened
+// by encoders that omit leading-zero octets in violation of RFC 9053.
 func (k *Key) UnmarshalCBOR(data []byte) error {
 	var tmp map[any]any
 	if err := decMode.Unmarshal(data, &tmp); err != nil {
