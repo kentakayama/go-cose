@@ -342,12 +342,21 @@ func NewKeyEC2(alg Algorithm, x, y, d []byte) (*Key, error) {
 	// Since x, y might be used before marshaling, we add 0x00 padding here.
 	size := keySizeEC2(curve)
 	if x != nil {
+		if len(x) > size {
+			return nil, fmt.Errorf("%w: x coordinate too long for curve %v", ErrInvalidKey, curve)
+		}
 		key.Params[KeyLabelEC2X] = append(make([]byte, size-len(x), size), x...)
 	}
 	if y != nil {
+		if len(y) > size {
+			return nil, fmt.Errorf("%w: y coordinate too long for curve %v", ErrInvalidKey, curve)
+		}
 		key.Params[KeyLabelEC2Y] = append(make([]byte, size-len(y), size), y...)
 	}
 	if d != nil {
+		if len(d) > size {
+			return nil, fmt.Errorf("%w: d coordinate too long for curve %v", ErrInvalidKey, curve)
+		}
 		key.Params[KeyLabelEC2D] = append(make([]byte, size-len(d), size), d...)
 	}
 	if err := key.validate(KeyOpReserved); err != nil {

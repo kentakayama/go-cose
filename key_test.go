@@ -934,6 +934,18 @@ func TestNewNewKeyEC2(t *testing.T) {
 			},
 			wantErr: "",
 		}, {
+			name: "long x", args: args{AlgorithmES256, ec384x, ec256y, ec256d},
+			want:    nil,
+			wantErr: "invalid key: x coordinate too long for curve P-256",
+		}, {
+			name: "long y", args: args{AlgorithmES256, ec256x, ec384y, ec256d},
+			want:    nil,
+			wantErr: "invalid key: y coordinate too long for curve P-256",
+		}, {
+			name: "long d", args: args{AlgorithmES256, ec256x, ec256y, ec384d},
+			want:    nil,
+			wantErr: "invalid key: d coordinate too long for curve P-256",
+		}, {
 			name: "valid ES384", args: args{AlgorithmES384, ec384x, ec384y, ec384d},
 			want: &Key{
 				Type:      KeyTypeEC2,
